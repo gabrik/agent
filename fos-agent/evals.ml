@@ -144,7 +144,7 @@ open Utils
       Logs.debug (fun m -> m "[eval_create_net] - ##############");
       Logs.debug (fun m -> m "[eval_create_net] - Properties: %s" (Apero.Properties.to_string props) );
       let descriptor = FTypes.virtual_network_of_string @@ Apero.Option.get @@ Apero.Properties.get "descriptor" props in
-      let record = FTypesRecord.{uuid = descriptor.uuid; status = `CREATE; properties = None; ip_configuration = descriptor.ip_configuration; overlay = None; vni = None; mcast_addr = None; vlan_id = None; face = None} in
+      let record = FTypesRecord.{uuid = descriptor.uuid; status = `CREATE; properties = None; ip_configuration = descriptor.ip_configuration; port=None; overlay = None; vni = None; mcast_addr = None; vlan_id = None; face = None} in
       Yaks_connector.Local.Desired.add_node_network (Apero.Option.get state.configuration.agent.uuid) net_p descriptor.uuid record state.yaks
       >>= fun _ ->
       let js = JSON.of_string @@ FTypesRecord.string_of_virtual_network record in
@@ -969,3 +969,108 @@ open Utils
     MVar.read self >>= fun state ->
     let%lwt res = Yaks_connector.Local.Actual.file_fdu_in_node myuuid instanceid filename state.yaks in
     Lwt.return @@  FAgentTypes.string_of_eval_result res
+(*  *)
+  let eval_add_node_bridge myuuid self (props:Apero.properties)   =
+    try%lwt
+      let brname = Apero.Option.get @@ Apero.Properties.get "brname" props in
+      Logs.debug (fun m -> m "[eval_add_node_bridge]- ##############");
+      Logs.debug (fun m -> m "[eval_add_node_bridge]- brname : %s" brname);
+      MVar.read self >>= fun state ->
+
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_add_node_bridge] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.add_node_bridge myuuid net_p brname state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_add_node_bridge] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res
+    (*  *)
+  let eval_remove_node_bridge myuuid self (props:Apero.properties)   =
+    try%lwt
+      let brname = Apero.Option.get @@ Apero.Properties.get "intf_name" props in
+      Logs.debug (fun m -> m "[eval_remove_node_bridge]- ##############");
+      Logs.debug (fun m -> m "[eval_remove_node_bridge]- brname : %s" brname);
+      MVar.read self >>= fun state ->
+
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_remove_node_bridge] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.remove_node_bridge myuuid net_p brname state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_remove_node_bridge] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res
+
+  let eval_attach_to_node_bridge myuuid self (props:Apero.properties) =
+    try%lwt
+      let brname = Apero.Option.get @@ Apero.Properties.get "br_name" props in
+      let intfname = Apero.Option.get @@ Apero.Properties.get "intf_name" props in
+      Logs.debug (fun m -> m "[eval_attach_to_node_bridge]- ##############");
+      Logs.debug (fun m -> m "[eval_attach_to_node_bridge]- intfname: %s brname : %s" intfname brname);
+      MVar.read self >>= fun state ->
+
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_attach_to_node_bridge] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.attach_to_node_bridge myuuid net_p intfname brname state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_attach_to_node_bridge] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res
+
+  let eval_detach_from_node_bridge myuuid self (props:Apero.properties)  =
+    try%lwt
+      let intfname = Apero.Option.get @@ Apero.Properties.get "intf_name" props in
+      Logs.debug (fun m -> m "[eval_detach_from_node_bridge]- ##############");
+      Logs.debug (fun m -> m "[eval_detach_from_node_bridge]- intfname : %s" intfname);
+      MVar.read self >>= fun state ->
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_detach_from_node_bridge] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.remove_node_bridge myuuid net_p intfname state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_detach_from_node_bridge] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res
+
+  let eval_add_node_vxlan myuuid self (props:Apero.properties) =
+  try%lwt
+      let vni = Apero.Option.get @@ Apero.Properties.get "vni" props in
+      let mcast = Apero.Option.get @@ Apero.Properties.get "mcast_group" props in
+      let port = Apero.Option.get @@ Apero.Properties.get "port" props in
+      let master = Apero.Option.get @@ Apero.Properties.get "master_intf" props in
+      Logs.debug (fun m -> m "[eval_add_node_vxlan]- ##############");
+      Logs.debug (fun m -> m "[eval_add_node_vxlan]- vni: %s mcast : %s port: %s master: %s" vni mcast port master);
+      MVar.read self >>= fun state ->
+
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_add_node_vxlan] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.add_node_vxlan myuuid net_p vni mcast port master state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_add_node_vxlan] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res
+
+  let eval_remove_node_vxlan myuuid self (props:Apero.properties)   =
+    try%lwt
+      let intfname = Apero.Option.get @@ Apero.Properties.get "intf_name" props in
+      Logs.debug (fun m -> m "[eval_remove_node_vxlan]- ##############");
+      Logs.debug (fun m -> m "[eval_remove_node_vxlan]- intfname : %s" intfname);
+      MVar.read self >>= fun state ->
+
+      let%lwt net_p = get_network_plugin self in
+      Logs.debug (fun m -> m "[eval_remove_node_vxlan] - # NetManager: %s" net_p);
+      let%lwt res = Yaks_connector.Local.Actual.remove_node_vxlan myuuid net_p intfname state.yaks in
+      Lwt.return @@  FAgentTypes.string_of_eval_result res
+    with
+    | exn ->
+      Logs.err (fun m -> m "[eval_remove_node_vxlan] Exception: %s" (Printexc.to_string exn));
+      let eval_res = FAgentTypes.{result = None ; error = Some 500; error_msg = Some (Printexc.to_string exn)} in
+      Lwt.return @@ FAgentTypes.string_of_eval_result eval_res

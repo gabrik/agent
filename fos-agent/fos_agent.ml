@@ -121,6 +121,12 @@ let agent verbose_flag debug_flag configuration custom_uuid =
   let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "remove_floating_ip" (Evals.eval_remove_floating_ip state) yaks in
   let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "add_router_port" (Evals.eval_add_router_port state) yaks in
   let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "remove_router_port" (Evals.eval_remove_router_port state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_interface_to_bridge" (Evals.eval_attach_to_node_bridge uuid state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_interface_no_bridge" (Evals.eval_detach_from_node_bridge uuid state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_create_bridge" (Evals.eval_add_node_bridge uuid state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_remove_bridge" (Evals.eval_remove_node_bridge uuid state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_create_vxlan" (Evals.eval_add_node_vxlan uuid state) yaks in
+  let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "node_delete_vxlan" (Evals.eval_remove_node_vxlan uuid state) yaks in
   (* FDU Evals *)
   let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "onboard_fdu" (Evals.eval_onboard_fdu state) yaks in
   let%lwt _ = Yaks_connector.Global.Actual.add_agent_eval sys_id Yaks_connector.default_tenant_id uuid "define_fdu" (Evals.eval_define_fdu state) yaks in
