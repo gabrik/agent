@@ -140,12 +140,20 @@ open Utils
   let eval_create_net self (props:Apero.properties) =
     MVar.read self >>= fun state ->
     try%lwt
-      let%lwt net_p = get_network_plugin self in
+      let%lwt net_p = get_network_plugin_info self in
+      let face =
+        match net_p.configuration with
+        | Some c ->
+          Some (Yojson.Safe.to_string @@ Yojson.Safe.Util.member "dataplane_interface" c)
+        | None ->
+            Logs.debug (fun m -> m "[cb_gd_net_all] - Missing data plane interface configuration");
+            None
+      in
       Logs.debug (fun m -> m "[eval_create_net] - ##############");
       Logs.debug (fun m -> m "[eval_create_net] - Properties: %s" (Apero.Properties.to_string props) );
       let descriptor = FTypes.virtual_network_of_string @@ Apero.Option.get @@ Apero.Properties.get "descriptor" props in
-      let record = FTypesRecord.{uuid = descriptor.uuid; status = `CREATE; properties = None; ip_configuration = descriptor.ip_configuration; port=None; overlay = None; vni = None; mcast_addr = None; vlan_id = None; face = None} in
-      Yaks_connector.Local.Desired.add_node_network (Apero.Option.get state.configuration.agent.uuid) net_p descriptor.uuid record state.yaks
+      let record = FTypesRecord.{uuid = descriptor.uuid; status = `CREATE; properties = None; ip_configuration = descriptor.ip_configuration; port=descriptor.port; overlay = None; vni = descriptor.vni; mcast_addr = descriptor.mcast_addr; vlan_id = descriptor.vlan_id; face = face} in
+      Yaks_connector.Local.Desired.add_node_network (Apero.Option.get state.configuration.agent.uuid) net_p.uuid descriptor.uuid record state.yaks
       >>= fun _ ->
       let js = JSON.of_string @@ FTypesRecord.string_of_virtual_network record in
       let eval_res = FAgentTypes.{result = Some js ; error=None; error_msg = None} in
