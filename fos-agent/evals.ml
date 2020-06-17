@@ -154,7 +154,9 @@ open Utils
       in
       Logs.debug (fun m -> m "[eval_create_net] - ##############");
       Logs.debug (fun m -> m "[eval_create_net] - Properties: %s" (Apero.Properties.to_string props) );
-      let descriptor = FTypes.virtual_network_of_string @@ Apero.Option.get @@ Apero.Properties.get "descriptor" props in
+      let net_id = Apero.Option.get @@ Apero.Properties.get "net_id" props in
+      let%lwt descriptor = Yaks_connector.Global.Actual.get_network (Apero.Option.get @@ state.configuration.agent.system) Yaks_connector.default_tenant_id net_id state.yaks in
+      let descriptor = Apero.Option.get descriptor in
       let record = FTypesRecord.{uuid = descriptor.uuid; status = `CREATE; properties = None; ip_configuration = descriptor.ip_configuration; port=descriptor.port; overlay = None; vni = descriptor.vni; mcast_addr = descriptor.mcast_addr; vlan_id = descriptor.vlan_id; face = face} in
       Yaks_connector.Local.Desired.add_node_network (Apero.Option.get state.configuration.agent.uuid) net_p.uuid descriptor.uuid record state.yaks
       >>= fun _ ->
