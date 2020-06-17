@@ -160,11 +160,13 @@ open Utils
        | Some net ->
          MVar.read self >>= fun self ->
          Logs.debug (fun m -> m "[cb_gd_net_all] - ##############");
-         Logs.debug (fun m -> m "[cb_gd_net_all] - vNET Updated! Agent will update actual store and call the right plugin!");
+         Logs.debug (fun m -> m "[cb_gd_net_all] - vNET Updated! Agent will update actual store");
+         Logs.debug (fun m -> m "[cb_gd_net_all] - vNET Info: %s" (FTypes.string_of_virtual_network net));
          let vni = (Random.int 16777215) in
          let net = match net.vni with | Some _ -> net | None -> {net with vni = Some vni } in
          let net = match net.mcast_addr with | Some _ -> net | None -> {net with mcast_addr = Some (Printf.sprintf "239.0.%d.%d" (Random.int 255) (Random.int 255))} in
          let net = match net.port with | Some _ -> net | None -> {net with port = Some 4789} in
+         Logs.debug (fun m -> m "[cb_gd_net_all] - vNET Info Updated: %s" (FTypes.string_of_virtual_network net));
          (* let net = match net.face with | Some _ -> net | None -> {net with face = Some face } in *)
          (* let net = match net.br_name with | Some _ -> net | None -> {net with br_name = Some (Printf.sprintf "fos-br-%d" vni)} in *)
          let%lwt _ = Yaks_connector.Global.Actual.add_network (Apero.Option.get @@ self.configuration.agent.system) Yaks_connector.default_tenant_id net.uuid net self.yaks in
