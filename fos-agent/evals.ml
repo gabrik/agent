@@ -144,9 +144,12 @@ open Utils
       let face =
         match net_p.configuration with
         | Some c ->
-          Some (Yojson.Safe.to_string @@ Yojson.Safe.Util.member "dataplane_interface" c)
+          let f = Yojson.Safe.to_string @@ Yojson.Safe.Util.member "dataplane_interface" c in
+          let f = String.sub f 1 ((String.length f) - 1) in
+          let f = String.sub f 0 ((String.length f) - 1) in
+          Some f
         | None ->
-            Logs.debug (fun m -> m "[cb_gd_net_all] - Missing data plane interface configuration");
+            Logs.debug (fun m -> m "[eval_create_net] - Missing data plane interface configuration");
             None
       in
       Logs.debug (fun m -> m "[eval_create_net] - ##############");
